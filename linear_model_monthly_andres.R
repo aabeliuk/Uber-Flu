@@ -190,8 +190,7 @@ matrix <- data.frame(y = flu_trends.y,
 #               month:uberpool + month:uberx + max_temp + min_temp + prcp + snow
 #               + min_temp:uberpool + prcp:uberpool + snow:uberpool + min_temp:uberx
 #             + min_temp:uberx + prcp:uberx + snow:uberx + lag(y,1), data = matrix)
-# model <- lm(y ~ 0 + city + year + month +month:uberx +month:uberpool+ uberpool + uberx, data = matrix)
-model <- lm(y ~ 0 + city + year + month + uberpool + uberx, data = matrix)
+model <- lm(y ~ 0 + city + year + month +month:uberx +month:uberpool+ uberpool + uberx, data = matrix)
 
 summary(model)
 smmr_1 <-summary(model)
@@ -199,4 +198,15 @@ paste("R-squared: ",
       round(smmr_1$r.squared, 3),
       ", p-value of F test: ",
       1-pf(smmr_1$fstatistic[1], smmr_1$fstatistic[2], smmr_1$fstatistic[3]))
+
+uberx.coef = model$coefficients[39]
+uberpool.coef = model$coefficients[38]
+
+uberx.month = c(uberx.coef,model$coefficients[40:50]+uberx.coef)
+uberpool.month = c(uberpool.coef, model$coefficients[51:61] + uberpool.coef)
+
+counts <- rbind(uberx.month, uberpool.month)
+barplot(counts, main="Car Distribution by Gears and VS",
+        xlab="Number of Gears", col=c("darkblue","red"), beside=TRUE, 
+        labels=c('Jan','Feb', 'Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'))
 
