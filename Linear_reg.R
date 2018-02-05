@@ -49,49 +49,32 @@ yearly_to_weekly <- function(x){
 }
 
 
-data.flu = read.csv('data/Austin.csv')
-data = ts(data.flu[,'Austin.TX'], freq=12, start=2004)
-
-data.flu = read.csv('data/NY.csv')
-data = ts(data.flu[,'New.York.NY'], freq=12, start=2004)
-
-data.flu = read.csv('data/Austin_Houston.csv')
-data = ts(data.flu[,'Austin.TX'], freq=12, start=2004)
-data.2 = ts(data.flu[,'Houston.TX'], freq=12, start=2004)
-data = data.2 -data
-
+# data.flu = read.csv('data/google_trends.csv')
+data.flu = read.csv('data/data_flu.csv')
+# data.chi = ts(data.flu[,'Chicago..IL'], freq=365.25/7, start=2003+(245+28)/365.25)
+data = ts(data.flu[,'San.Francisco..CA'], freq=365.25/7, start=2003+(245+28)/365.25)
+# data.ny = ts(data.flu[,'New.York..NY'], freq=365.25/7, start=2003+(245+28)/365.25)
 plot(data, xlab='Years', ylab = 'Flu')
 plot(diff(data),ylab='Differenced Flu')
 plot(log10(data),ylab='Log (Flu)')
 plot(diff(log10(data)),ylab='Differenced Log (Flu)')
 
 par(mfrow = c(1,2))
-acf(ts(diff((data))),main='ACF Flu')
-pacf(ts(diff((data))),main='PACF Flu')
+acf(ts(diff(log10(data))),main='ACF Flu')
+pacf(ts(diff(log10(data))),main='PACF Flu')
 
-ARIMAfit = auto.arima((data.2),trace=FALSE,xreg=cbind(data.flu$Uberx_HO))
+ARIMAfit = auto.arima(log10(data), approximation=TRUE,trace=FALSE, stationary=TRUE, max.p=1, max.q=1)
 summary(ARIMAfit)
-(1-pnorm(abs(ARIMAfit$coef)/sqrt(diag(ARIMAfit$var.coef))))*2
-
-components <- decompose(data)
-plot(components)
-
-par(mfrow=c(1,2))
-acf(ts(ARIMAfit$residuals),main='ACF Residual')
-pacf(ts(ARIMAfit$residuals),main='PACF Residual')
 
 par(mfrow = c(1,1))
-pred = predict(ARIMAfit, n.ahead = 36)
-plot(data,type='l',xlim=c(2004,2022),xlab = 'Year')
+pred = predict(ARIMAfit, n.ahead = 158)
+pred
+plot(data,type='l',xlim=c(2004,2018),xlab = 'Year',ylab = 'Tractor Sales')
 lines(10^(pred$pred),col='blue')
 lines(10^(pred$pred+2*pred$se),col='orange')
 lines(10^(pred$pred-2*pred$se),col='orange')
 
-uber <- (data.flu$Uberx+data.flu$UberPool)
-reg <- arima(data, order=c(1,1,1), seasonal = c(2,0,0), xreg=data.flu$Uberx)
-reg <- arima(log10(data), order=c(1,0,0), seasonal = c(2,0,0), xreg=uber)
-summary(reg)
-(1-pnorm(abs(reg$coef)/sqrt(diag(reg$var.coef))))*2
+
 
 #Linear regresion 
 week = as.integer(format(as.Date(as.character(data.flu[,1]), "%m/%d/%Y"), "%W"))
@@ -152,7 +135,7 @@ PH.date = uber_dummy("5/1/14", ini_date, nrow(ts_m)-1)
 
 data.uber <- c(NY.date,SF.date,CH.date,HO.date,BO.date,PH.date)
 
-matrix <- data.frame(y =(data.y-data.y2)/data.y2,
+matrix <- data.frame(y = data.y-data.y2,
                      week = as.factor(data.week),
                      # month = as.factor(data.month),
                      year = as.factor(data.year),
